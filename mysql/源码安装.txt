@@ -1,0 +1,38 @@
+#!/bin/bash
+install_path=`pwd`
+
+
+cd $install_path
+        echo "check mysql version is system"
+        if /usr/local/mysql/bin/mysql --version | grep 5.5.22 ;then
+                echo "mysql 5.5.22 has installed. no need to install it again"        
+                return 2
+        fi
+        echo "######   install mysql   #############"
+        tar -xf mysql-5.5.22.tar.gz
+        cd mysql-5.5.22
+        cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/usr/local/mysql/data -DSYSCONFDIR=/etc -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DMYSQL_UNIX_ADDR=/tmp/mysqld.sock -DMYSQL_TCP_PORT=3306 -DENABLED_LOCAL_INFILE=1 -DEXTRA_CHARSETS=all -DDEFAULT_CHARSET=utf8  -DDEFAULT_COLLATION=utf8_general_ci -DMYSQL_USER=mysql
+        make && make install
+        cd .. && rm -rf mysql-5.5.22
+        echo "#### cfg mysql  #####"
+        mkdir -p /data/mysql_data/
+        mv /usr/local/mysql/data /data/mysql_data/
+        ln -s /data/mysql_data/data /usr/local/mysql/data
+        chown -R mysql:mysql /usr/local/mysql/data
+        /usr/local/mysql/scripts/mysql_install_db --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data --user=mysql
+        cp -arpvf my.cnf /etc/
+            /usr/local/mysql/support-files/mysql.server start
+        sleep 3
+        /usr/local/mysql/bin/mysql -uroot -e " GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' IDENTIFIED BY PASSWORD '*7FF3AEC16A44A0BAFC6DF57A3F970500FF296E66' WITH GRANT OPTION ;"
+        /usr/local/mysql/bin/mysql -uroot -e "delete from mysql.user where user='root';"
+        /usr/local/mysql/bin/mysql -uroot -e "delete from mysql.user where user='';"
+        /usr/local/mysql/bin/mysql -uroot -e "GRANT SELECT, LOCK TABLES, EXECUTE, EVENT ON *.* TO 'dumper'@'localhost' IDENTIFIED BY PASSWORD '*4AF9EDC1CDCF4CB398D0B33FDF5E62BD5FB7A22F' WITH GRANT OPTION;"
+        /usr/local/mysql/bin/mysql -uroot -e "flush privileges;"
+        
+        echo "mysql is installed successful!!"
+
+mkdir -p /usr/local/mysql
+groupadd mysql
+useradd -r -g mysql mysql
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY PASSWORD '*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9' WITH GRANT OPTION ;
